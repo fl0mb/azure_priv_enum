@@ -1,6 +1,6 @@
 # azure_priv_enum
 
-azure_priv_enum is a tool to gather all the permissions an identity could have in Azure.
+azure_priv_enum is a tool to gather all the permissions an identity could have in Azure, including nested assignments via groups, App Roles, PIM eligible assignments.
 
 This can be difficult due to:
 
@@ -16,12 +16,11 @@ This can be difficult due to:
 
 2. Insufficient documentation and odd default behavior in those tools:
 
-    The az cli documentation for example, states that the following command lists role assignments:
+The az cli documentation for example, states that the following command lists role assignments:
     ```
     az role assignment list
     ```
-
-    By default however that az command only applies to the currently selected subscription. Additional arguments are needed to also not list roles assigned to groups, inherited roles or classic administrators. This is unintuitive and many role assignments could therefor be missed.
+By default however that az command only applies to the currently selected subscription. Additional arguments are needed to also not list roles assigned to groups, inherited roles or classic administrators. This is unintuitive and many role assignments could therefor be missed.
 
 3. The manny different ways some kind of privilege could be applied to an identity:
  - AzureAD Role Assignments 
@@ -45,11 +44,12 @@ This can be difficult due to:
 
 4. Different feature sets depending on the AzureAD licensing.
 
-The goal of this tool is to find every privilege a given identity might have, including nested assignments via groups or PIM eligible assignments.
 
 ## Usage
 In order to run it, a privileged user with global read access is recommended. 
-Only a tenant-id/domain and the identity to query are needed to start:
+Only a tenant-id/domain and the identity to query are needed to start.
+For convenience, the -i parameter accepts object-ids of users, groups, service principals, app registrations and client-ids.
+The initial output will show you the kind of identity provided. 
 
 ```bash
 python az.py -t 94c579f8-ac71-4528-9fde-7c56a007991b -i 83c6f248-97b4-41b7-941d-7c56a007991b
@@ -57,18 +57,10 @@ python az.py -t 94c579f8-ac71-4528-9fde-7c56a007991b -i 83c6f248-97b4-41b7-941d-
 python az.py -d xyz.onmicrosoft.com -i 83c6f248-97b4-41b7-941d-7c56a007991b
 
 python az.py -d xyz.onmicrosoft.com -u user@xyz.onmicrosoft.com
+
+python az.py -d xyz.onmicrosoft.com -u user@xyz.onmicrosoft.com -o out.json
 ```
 If no refresh-token is provided, a device code flow will be started and the resulting tokens are saved to disk (tokens.json).
-
-**Do not forget to delete local files.**
-
-Keep in mind there could still be ACLs and resource level policies.
-
-
-When leaked credentials are found in an assessment, it could be hard to determine what kind of identity they might belong to.
-Therefor, the -i parameter accepts object-ids of users, groups, service principals, app registrations and client-ids.
-The initial output will show you the kind of identity provided. 
-
 
 ```
 -t / --tenant-id
@@ -81,10 +73,13 @@ The initial output will show you the kind of identity provided.
 -o / --path  
 ```
 
+**Do not forget to delete local files.**
+
+Keep in mind there could still be ACLs and resource level policies.
+
 
 ## Project status
 Project is currently lacking real world testing in larger environments. 
 Watch out for the following:
- - management groups  
- - Administration Groups(ou)
+ - Administration Groups
  - Ratelimiting or Max Results on API
